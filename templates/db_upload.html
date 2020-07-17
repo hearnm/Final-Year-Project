@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{% include "head.html" %}
+</head>
+{% include "header.html" %}
+{% block body %}
+<body>
+    <div class="centralForm">
+        <form action="/doGraphDB" target="_blank" method="post" enctype="multipart/form-data">
+            <div id="uploadForm">
+                <div class="form-row">
+                    <div class="col">
+                        <a href="/" class="btn btn-primary">
+                            <span class="glyphicon glyphicon-chevron-left"></span> < Return
+                        </a>
+                    </div>
+
+                </div>
+                <div>&nbsp;</div>
+                <div class="form-group col-sm-*">
+                    <label for="nodeNumberBox" title="To select multiple nodes, separate the numbers with commas ','. Limit 4">Node Number(s):</label>
+                    <input type="text" id="nodeNumberBox" name="nodeNumber" required>
+                </div>
+                <div class="form-group col-sm-*">
+                    <label for="cds">Values to graph (max 2):</label>
+                    <select id="cds" name="chartDataSelector" class="form-control" multiple="multiple" required>
+                        <option value="temperature">Temperature</option>
+                        <option value="humidity">Humidity</option>
+                        <option value="airPressure">Air Pressure</option>
+                        <option value="lightLevel">Luminosity</option>
+                    </select>
+                    <!---
+                    <label for="cds">Temperature</label>
+                    <input type="radio" id="cds" name="chartDataSelector" value="Temperature" required>
+                    <label for="cds">Humidity</label>
+                    <input type="radio" id="cds" name="chartDataSelector" value="Humidity" required>
+                    <label for="cds">Air Pressure</label>
+                    <input type="radio" id="cds" name="chartDataSelector" value="Air Pressure" required>
+                    <label for="cds">Luminosity</label>
+                    <input type="radio" id="cds" name="chartDataSelector" value="Lux" required>--->
+                </div>
+                <div class="form-group col-sm-*">
+                    <label for="dateRange1">Select values in range:</label>
+                    <input id="dateRange1" name="dateRangeLower" type="datetime-local" required>
+                    <label for="dateRange2">to</label>
+                    <input id="dateRange2" name="dateRangeHigher" type="datetime-local" required>
+                </div>
+                <div class="form-group col-sm-*">
+                    <label for="skipPlotsSelector">Skip every X plots (leave empty for all plots): </label>
+                    <input id="skipPlotsSelector" name="skipPlots" type="number">
+                </div>
+                <div class="form-group col-sm-*">
+                    <label for="whereClause">Where clause (optional):</label>
+                    <input id="whereClause" name="whereClause" type="text">
+                </div>
+                <div class="form-group col-sm-*">
+                    <input class="btn btn-primary" type="submit">
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="graphDiv">
+
+    </div>
+</body>
+{% endblock %}
+<script>
+    $("#fileUpload").on("change", function () {
+        let fileName = $("#fileUpload").val().split("\\").pop();
+
+        $("#fileUploadName").empty();
+        $("#fileUploadName").append(fileName);
+    })
+
+    $("#submitButton").on("click", function (e) {
+        let optionsLength = $("#cds").length;
+        let nodesNumber = $("#nodeNumberBox").val().split(",").length;
+        let error = "";
+        if (optionsLength > 2) {
+            error = error + "You may only select up to two datatypes to plot at one time.\n";
+        }
+
+        if (nodesNumber > 4) {
+            error = error + "You may only select up to four nodes to plot.\n";
+        }
+
+        if ($("#dateRange1").val() > $("#dateRange2").val()) {
+            error = error + "The second date must be after the first date.\n";
+        }
+
+        if (error !== "") {
+            alert(error);
+            e.preventDefault();
+        }
+
+
+    })
+</script>
+</html>

@@ -1,0 +1,18 @@
+<header>
+    <div id="topBar" class="w3-bar w3-left">
+        {% if user is defined %}
+        Logged in as: {{ user }}
+        <form id="logoutButton" action="/logout">
+            <button type="submit" class="btn btn-danger">Logout</button>
+        </form>
+        {% else %}
+        Logged in as: None
+        <form id="logoutButton" action="/login">
+            <button type="submit" class="btn btn-success">Login</button>
+        </form>
+        {% endif %}
+    </div>
+    <nav id="tabBar" class="nav">
+
+    </nav>
+</header>

@@ -1,0 +1,15 @@
+<title>{{ Title }}</title>
+<!--<link rel="shortcut icon" href="../resources/favicon.ico">
+<link rel="icon" type="image/png" href="../resources/favicon-16x16.png">-->
+<link rel="shortcut icon" href="#">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+<script src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
+<script>
+    $( document ).ready(function () {
+        let error = "{{ error }}";
+        if(error.length > 0 ){
+            alert(error);
+        }
+    })
+</script>

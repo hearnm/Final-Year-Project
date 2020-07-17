@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{% include "head.html" %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+</head>
+{% include "header.html" %}
+{% block body %}
+<body>
+    <div id="canvasContainer" class="container">
+		<canvas id="dataChart"></canvas>
+	</div>
+    <div id="graphInterfaceForm">
+         <div class="form-group">
+             View data from
+             <input id="timeMin" name="timeMin" type="datetime-local" min="{{ dateRange[0] }}" max="{{ dateRange[1] }}" value={{ dateRange[0] }}>
+             to
+             <input id="timeMax" name="timeMax" type="datetime-local" min="{{ dateRange[0] }}" max="{{ dateRange[1] }}" value={{ dateRange[1] }}>
+             <button id="setTimesButton" type="button" class="btn btn-info">Submit</button>
+             <button id="printOutButton" type="button" class="btn btn-light">Print Graph</button>
+             <button id="liveViewToggleButton" type="button" class="btn btn-primary">Toggle Live Update [Off]</button>
+             <!-- Testing button, hidden for lack of functionality -->
+             <button id="tempReload" type="button" hidden>Temp</button>
+         </div>
+    </div>
+
+    <script>
+        //Node: Uses chart.-jsv2.9.3, glyphiconsv0.2.0 and momentv2.24.0 from npm to work
+
+        function drawChart(min=null, max=null) {
+
+            $("#dataChart").remove();
+            $("#canvasContainer").append("<canvas id=\"dataChart\"></canvas>");
+            let dataChart = document.getElementById('dataChart').getContext('2d');
+            var timeFormat = "MM/DD/YYYY HH:mm";
+            data = {{ data|tojson|safe }};
+            metadata = data["metadata"];
+            nodes = data["nodes"];
+
+            labels = [];
+
+            data1 = data.data1.map(function (e) {
+                return {node: e.node, x: moment(e.x), y: e.y};
+            });
+
+            data2 = data.data2.map(function (e) {
+                return {node: e.node, x: moment(e.x), y: e.y};
+            });
+
+            if (max != null && min != null) {
+                dataParse = [];
+                for (var i = 0; i < data1.length; i++) {
+                    xVal = data1[i].x;
+
+                    if (xVal > max || xVal < min) {
+                        data1[i].x = null;
+                        data1[i].y = null;
+                    }
+
+                    dataParse.push(data1[i]);
+                }
+
+                data1 = dataParse;
+
+                dataParse = [];
+                for (var i = 0; i < data2.length; i++) {
+                    xVal = data2[i].x;
+
+                    if (xVal > max || xVal < min) {
+                        data2[i].x = null;
+                        data2[i].y = null;
+
+                    }
+
+                    dataParse.push(data2[i]);
+                }
+
+                data2 = dataParse;
+
+            }
+
+            labels = data1.map(function (e) {
+                if (e.x != null) {
+                    return new Date(e.x).toUTCString();
+                }
+            });
+
+            data1split = new Array(nodes.length);
+            data2split = new Array(nodes.length);
+            for (var i = 0; i < nodes.length; i++) {
+                data1split[i] = [];
+                data2split[i] = [];
+            }
+
+            for (var i = 0; i < data1.length; i++) {
+                nid = nodes.indexOf(data1[i].node);
+                data1split[nid].push(data1[i]);
+            }
+
+            for (var i = 0; i < data2.length; i++) {
+                nid = nodes.indexOf(data2[i].node);
+                data2split[nid].push(data2[i]);
+            }
+
+            colours = ["#76abdf", "#4d92d5", "#619eda", "#8bb8e4", "#ff0000", "#ce141e", "#ab0c3c", "#890440"];
+
+            let dataChartChart = new Chart(dataChart, {
+                type: 'scatter',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {% for node in data["nodes"] %}
+                            {
+                                label: metadata["yAxis1Label"] + ' over time. [NODE {{ node }}]',
+                                yAxisID: 'data1',
+                                data: data1split[nodes.indexOf({{ node }})],
+                                fill: false,
+                                type: "line",
+                                borderColor: colours[nodes.indexOf({{ node }})],
+                                pointBackgroundColor: colours[nodes.indexOf({{ node }})],
+                                pointBorderColor: colours[nodes.indexOf({{ node }})],
+                                pointHoverBackgroundColor: colours[nodes.indexOf({{ node }})],
+                            },
+                            {% if data["data2"] %}
+                                {
+                                    label: metadata["yAxis2Label"] + '  over time. [NODE {{ node }}]',
+                                    yAxisID: 'data2',
+                                    data: data2split[nodes.indexOf({{ node }})],
+                                    fill: false,
+                                    type: "line",
+                                    borderColor: colours[4 + nodes.indexOf({{ node }})],
+                                    pointBackgroundColor: colours[4 + nodes.indexOf({{ node }})],
+                                    pointBorderColor: colours[4 + nodes.indexOf({{ node }})],
+                                    pointHoverBackgroundColor: colours[4 + nodes.indexOf({{ node }})],
+                                },
+                            {% endif %}
+                        {% endfor %}
+                    ],
+                    borderColor: 'black',
+                    borderWidth: 0.2,
+                    pointBackgroundColor: ['#000', '#00bcd6', '#d300d6'],
+                    pointBorderColor: ['#000', '#00bcd6', '#d300d6'],
+                    pointRadius: 0.1,
+                    pointHoverRadius: 0.2,
+                    fill: false,
+                    tension: 0,
+                    showLine: true
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        yAxes: [{
+                            id: 'data1',
+                            type: 'linear',
+                            scaleLabel: {
+                                display: true,
+                                labelString: metadata["yAxis1Label"] + ' ' + metadata["yAxis1Unit"]
+                            },
+                            position: "left",
+                        }
+                            {% if data["data2"] %}
+                                , {
+                                    id: 'data2',
+                                    type: 'linear',
+                                    scaleLabel: {
+                                        display: true,
+                                        labelString: metadata["yAxis2Label"] + ' ' + metadata["yAxis2Unit"]
+                                    },
+                                    position: "right"
+                                }
+                            {% endif %}
+                        ],
+
+                        xAxes: [{
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Time'
+                            },
+                            ticks: {
+                                userCallback: function(label, index, labels) {
+                                    return moment(label).format("DD/MM/YY HH:MM");
+                                }
+                            }
+                        }]
+                    },
+                    pan: {
+                        enabled: true,
+                        mode: "x",
+                        speed: 10,
+                        threshold: 10
+                    },
+                    zoom: {
+                        enabled: true,
+                        drag: false,
+                        mode: "xy",
+                        limits: {
+                            max: 10,
+                            min: 0.5
+                    }
+                }
+                }
+            });
+        }
+    </script>
+</body>
+{% endblock %}
+<script>
+    let liveMode = false;
+
+    $("document").ready(function () {
+        drawChart();
+    });
+
+    $("#setTimesButton").on("click", function() {
+        let maxX = new Date($("#timeMax").val());
+        let minX = new Date($("#timeMin").val());
+        if (minX < maxX) {
+            let maxUX = maxX.getTime();
+            let minUX = minX.getTime();
+
+            drawChart(parseInt(minUX), parseInt(maxUX));
+        }
+        else {
+            alert("The minimum range cannot be higher than the maximum range");
+        }
+    });
+
+    function getData(data, min, max) {
+        dataOut = [];
+        for (item in data) {
+            if (item[0] >= min && item[0] <= max) {
+                dataOut.push({item});
+            }
+        }
+
+        return dataOut
+    }
+    
+    $("#printOutButton").on("click", function () {
+        var canvas = $("#dataChart")[0];
+        document.write("<img src = '" + canvas.toDataURL("image/png") + "'/>");
+
+    });
+
+    $("#liveViewToggleButton").on("click", function () {
+        let btn = $("#liveViewToggleButton");
+        if (liveMode === false) {
+            liveMode = true;
+            btn.addClass("btn-success").removeClass("btn-primary");
+            btn.text("Toggle Live Update [On]");
+        } else {
+            liveMode = false;
+            btn.addClass("btn-primary").removeClass("btn-success");
+            btn.text("Toggle Live Update [Off]");
+        }
+    });
+
+    $("#tempReload").on("click", function() {
+        $.ajax({
+            url: "/doGraphDB",
+            type: "get",
+            data: {"metadata": metadata,
+                    "nodes": nodes},
+            success: function (response) {
+                document.writeln(response);
+            }
+        });
+    });
+</script>
+</html>

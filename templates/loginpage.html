@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{% include "head.html" %}
+</head>
+{% include "header.html" %}
+{% block body %}
+<body>
+<form action="/login" method="post">
+    <div class="centralForm">
+        <div class = "form-group col-sm-*" id="loginError">
+            {{ error }}
+        </div>
+        <div class="form-group col-sm-* forminterior">
+            <label for="usernameBox" type="text">Username: </label>
+            <input id="usernameBox" name="username" class="form-control" placeholder="Username" value="">
+        </div>
+        <div class="form-group col-sm-* forminterior">
+            <label for="passwordBox">Password: </label>
+            <input id="passwordBox" name="password" class="form-control" placeholder="Password" value="" type="password">
+        </div>
+        <div class="form-group col-sm-* forminterior">
+            <input class="btn btn-primary" type="submit" style="">
+            <input class="btn btn-info" id="guestBox" name="guestBox" type="button" value="Continue as Guest" onclick="continueAsGuest()">
+        </div>
+    </div>
+</form>
+</body>
+{% endblock %}
+<script>
+    function continueAsGuest() {
+        window.location.href = "/guest";
+    }
+</script>
+</html>

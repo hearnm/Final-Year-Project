@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{% include "head.html" %}
+</head>
+{% include "header.html" %}
+{% block body %}
+<body>
+    <div class="centralForm">
+        <form action="/doGraph" target="_blank" method="post" enctype="multipart/form-data">
+            <div id="uploadForm">
+                <div class="form-row">
+                    <div class="col">
+                        <label class="btn btn-info">Upload Data <input type="file" id="fileUpload" name="dataUpload" hidden required> </label>
+                        <div id="fileUploadName"></div>
+                    </div>
+                    <!--<label class="btn btn-primary"><input type="checkbox" id="pullFromDBCheck"></label>-->
+                    {% if user is defined %}
+                    <div class="col">
+                        <a href="/database" class="btn btn-primary">Go to database selection view</a>
+                    </div>
+                    {% endif %}
+
+                </div>
+                <div>&nbsp;</div>
+                <div class="form-group col-sm-*">
+                    <label for="nodeNumberBox" title="To select multiple nodes, separate the numbers with commas ','. Limit 4">Node Number(s):</label>
+                    <input type="text" id="nodeNumberBox" name="nodeNumber" required>
+                </div>
+                <div class="form-group col-sm-*">
+                    <label for="cds">Values to graph (max 2):</label>
+                    <select id="cds" name="chartDataSelector" class="form-control" multiple="multiple">
+                        <option value="Temperature">Temperature</option>
+                        <option value="Humidity">Humidity</option>
+                        <option value="Air Pressure">Air Pressure</option>
+                        <option value="Luminosity">Luminosity</option>
+                    </select>
+                    <!---
+                    <label for="cds">Temperature</label>
+                    <input type="radio" id="cds" name="chartDataSelector" value="Temperature" required>
+                    <label for="cds">Humidity</label>
+                    <input type="radio" id="cds" name="chartDataSelector" value="Humidity" required>
+                    <label for="cds">Air Pressure</label>
+                    <input type="radio" id="cds" name="chartDataSelector" value="Air Pressure" required>
+                    <label for="cds">Luminosity</label>
+                    <input type="radio" id="cds" name="chartDataSelector" value="Lux" required>--->
+                </div>
+                <div class="form-group col-sm-*">
+                    <label for="skipPlotsSelector">Skip every X plots (leave empty for all plots): </label>
+                    <input id="skipPlotsSelector" name="skipPlots" type="number">
+                </div>
+                <div class="form-group col-sm-*">
+                    <input id="submitButton" class="btn btn-primary" type="submit">
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="graphDiv">
+
+    </div>
+</body>
+{% endblock %}
+<script>
+    $("#fileUpload").on("change", function () {
+        let fileName = $("#fileUpload").val().split("\\").pop();
+
+        $("#fileUploadName").empty();
+        $("#fileUploadName").append(fileName);
+    });
+
+    //Acts as a check to prevent common errors in the code, the rest are ignored by the python code upon error.
+    $("#submitButton").on("click", function (e) {
+        let optionsLength = $("#cds").length;
+        let nodesNumber = $("#nodeNumberBox").val().split(",").length;
+        let error = "";
+        if (optionsLength > 2) {
+            error = error + "You may only select up to two datatypes to plot at one time.\n";
+        }
+
+        if (nodesNumber > 4) {
+            error = error + "You may only select up to four nodes to plot.\n";
+        }
+
+        if (error !== "") {
+            alert(error);
+            e.preventDefault();
+        }
+
+
+    })
+
+</script>
+</html>
